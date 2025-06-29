@@ -81,7 +81,7 @@ def predict():
         return jsonify({"error": str(e)}), 400
 
 # ============ 4. LLM CONFIG (OpenRouter API) ============
-API_KEY = "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"
+API_KEY = "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"
 MODEL_NAME = "mistralai/mistral-7b-instruct"
 LLM_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -146,14 +146,26 @@ def next_question():
 # ============ 6. ENDPOINT: Generate Personalized Advice ==
 @app.route('/generate-advice', methods=['POST'])
 def generate_advice():
-    history = request.json.get("qa_history", [])
+    history = request.json.get("qa_history", []),
+    medical_data = request.json.get("medical_data", {})
     dialogue = ""
     for item in history:
         dialogue += f"Question: {item['question']}\nAnswer: {item['answer']}\n"
 
+    med_info = f"""
+    Gender: {'Male' if medical_data.get('gender') == 1 else 'Female'}  
+    Age: {medical_data.get('age', 'N/A')}  
+    Hypertension: {"Yes" if medical_data.get('hypertension') == 1 else "No"}  
+    Heart Disease: {"Yes" if medical_data.get('heart_disease') == 1 else "No"}  
+    Smoking History Code: {medical_data.get('smoking_history')}  
+    BMI: {medical_data.get('bmi', 'N/A')}  
+    HbA1c: {medical_data.get('HbA1c_level', 'N/A')}  
+    Blood Glucose: {medical_data.get('blood_glucose_level', 'N/A')}  
+    """
+    
     prompt = f"""
     The patient has diabetes. Below is their interactive question-and-answer history:\n{dialogue}
-
+    Their medical profile is as follows:\n{med_info}
      Based on this, generate **personalized medical advice** tailored to the patient’s condition.
 
     Guidelines:
